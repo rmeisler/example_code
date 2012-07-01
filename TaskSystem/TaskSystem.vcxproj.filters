@@ -24,10 +24,10 @@
     <ClCompile Include="Task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\SpinLock.cpp">
+    <ClCompile Include="..\Common\Timing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Timing.cpp">
+    <ClCompile Include="..\Common\ScopedLock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <ClInclude Include="..\Common\ConcurrentQueue.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\SpinLock.hpp">
+    <ClInclude Include="..\Common\ScopedLock.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

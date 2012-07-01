@@ -12,8 +12,12 @@ class ConcurrentQueue : public Concurrency::concurrent_queue<T*> {};
 
 #else
 
+#include "ScopedLock.hpp"
+
 #include <queue>
-#include "SpinLock.hpp"
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 // Simple, thread-safe queue
 template <typename T>
@@ -21,11 +25,19 @@ class ConcurrentQueue
 {
 public:
 
-    ConcurrentQueue() : mMutex(0) {}
+    ConcurrentQueue()
+    {
+        InitializeCriticalSection(&mMutex);
+    }
+
+    ~ConcurrentQueue()
+    {
+        DeleteCriticalSection(&mMutex);
+    }
 
     void push(T* item)
     {
-        SpinLock _(mMutex);
+        ScopedLock _(mMutex);
         mQueue.push(item);
     }
 
@@ -33,7 +45,7 @@ public:
     {
         item = NULL;
 
-        SpinLock _(mMutex);
+        ScopedLock _(mMutex);
         if( !mQueue.empty() )
         {
             item = mQueue.front();
@@ -48,7 +60,7 @@ public:
 private:
 
     std::queue<T*> mQueue;
-    LightMutex mMutex;
+    CRITICAL_SECTION mMutex;
 
 };
 

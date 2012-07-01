@@ -84,7 +84,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\Common\AlignedAlloc.hpp" />
     <ClInclude Include="..\..\Common\ConcurrentQueue.hpp" />
-    <ClInclude Include="..\..\Common\SpinLock.hpp" />
+    <ClInclude Include="..\..\Common\ScopedLock.hpp" />
     <ClInclude Include="Boid.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="Debug.h" />
@@ -101,7 +101,7 @@
     <ClInclude Include="Wall.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Common\SpinLock.cpp" />
+    <ClCompile Include="..\..\Common\ScopedLock.cpp" />
     <ClCompile Include="..\..\Common\Timing.cpp" />
     <ClCompile Include="Boid.cpp" />
     <ClCompile Include="Collision.cpp" />

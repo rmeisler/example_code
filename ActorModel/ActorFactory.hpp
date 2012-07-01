@@ -2,8 +2,11 @@
 
 #include <vector>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #include "ActorHandle.hpp"
-#include "SpinLock.hpp"
+#include "ScopedLock.hpp"
 
 // Simple slot map for managing actor handles
 class ActorFactory
@@ -11,6 +14,7 @@ class ActorFactory
 public:
 
     ActorFactory();
+    ~ActorFactory();
 
     template <typename ActorType>
     ActorHandle Create()
@@ -60,7 +64,7 @@ private:
 
     // TODO: Make a more sophisticated locking scheme for this data structure?
     // e.g. separate into multiple locks for reading/growing and creating/destroying?
-    LightMutex mMutex;
+    CRITICAL_SECTION mMutex;
 
     int mFreeIndexHead;
     std::vector<Index> mSlots;

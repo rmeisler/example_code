@@ -20,15 +20,22 @@ Actor* ActorHandle::Get()
 }
 
 // Note: Always need to default LightMutex to 0, perhaps a usability downside to making LightMutex a simple typedef
-ActorFactory::ActorFactory() : mIdCount(0), mFreeIndexHead(-1), mMutex(0)
+ActorFactory::ActorFactory() : mIdCount(0), mFreeIndexHead(-1)
 {
+    InitializeCriticalSection(&mMutex);
+
     Grow();
+}
+
+ActorFactory::~ActorFactory()
+{
+    DeleteCriticalSection(&mMutex);
 }
 
 ActorHandle ActorFactory::CreateHandle(Actor* actor)
 {
     // Lock this whole function
-    SpinLock _(mMutex);
+    ScopedLock _(mMutex);
 
     // Need to grow pool
     if( mFreeIndexHead == -1 )
@@ -53,7 +60,7 @@ ActorHandle ActorFactory::CreateHandle(Actor* actor)
 void ActorFactory::Destroy(ActorHandle& handle)
 {
     // Lock this whole function
-    SpinLock _(mMutex);
+    ScopedLock _(mMutex);
 
     Index* index = &mSlots[handle.index];
 
@@ -69,7 +76,7 @@ void ActorFactory::Destroy(ActorHandle& handle)
 Actor* ActorFactory::Get(unsigned int id, unsigned int index)
 {
     // Lock this whole function
-    SpinLock _(mMutex);
+    ScopedLock _(mMutex);
 
     Index* indexRef = &mSlots[index];
 

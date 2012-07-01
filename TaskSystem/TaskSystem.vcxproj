@@ -78,7 +78,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Common\SpinLock.cpp" />
+    <ClCompile Include="..\Common\ScopedLock.cpp" />
     <ClCompile Include="..\Common\Timing.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Scheduler.cpp" />
@@ -87,7 +87,7 @@
   <ItemGroup>
     <ClInclude Include="..\Common\AlignedAlloc.hpp" />
     <ClInclude Include="..\Common\ConcurrentQueue.hpp" />
-    <ClInclude Include="..\Common\SpinLock.hpp" />
+    <ClInclude Include="..\Common\ScopedLock.hpp" />
     <ClInclude Include="Scheduler.hpp" />
     <ClInclude Include="Task.hpp" />
     <ClInclude Include="TaskList.hpp" />
