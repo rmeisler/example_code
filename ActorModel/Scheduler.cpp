@@ -41,9 +41,6 @@ DWORD WINAPI Thread::ThreadFunction(LPVOID data)
     auto thread = (Thread*)data;
     Message* msg = NULL;
 
-    // TODO: Create per thread allocator here and make a global thread-specific reference
-    // to it using __declspec(thread)
-
     // We should initialize each timer per thread, in case our frequency differs per core
     InitTimer();
 
