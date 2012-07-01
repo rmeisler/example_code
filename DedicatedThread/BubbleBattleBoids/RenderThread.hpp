@@ -39,7 +39,7 @@ public:
 
     void SendMessage(Message* msg);
     void Render();
-    void HandleMessage();
+    void HandleMessages();
 
 private:
 

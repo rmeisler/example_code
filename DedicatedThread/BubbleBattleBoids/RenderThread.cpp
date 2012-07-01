@@ -62,7 +62,7 @@ void RenderThread::Render()
 	}
 }
 
-void RenderThread::HandleMessage()
+void RenderThread::HandleMessages()
 {
     Message* msg = NULL;
     unsigned int messagesHandled = 0;
@@ -183,7 +183,7 @@ void Display()
 	glutSwapBuffers();
 
     // Handle messages
-    g_RenderThread->HandleMessage();
+    g_RenderThread->HandleMessages();
 
     // Redraw immediately
 	glutPostRedisplay();
