@@ -63,7 +63,7 @@ private:
     unsigned int mIdCount;
 
     // TODO: Make a more sophisticated locking scheme for this data structure?
-    // e.g. separate into multiple locks for reading/growing and creating/destroying?
+    // Reader/Writer lock?
     CRITICAL_SECTION mMutex;
 
     int mFreeIndexHead;
