@@ -1,15 +1,19 @@
 #include "PCH.h"
 #include "GameObject.h"
 #include "Game.h"
-#include "RenderThread.hpp"
 
 GameObject* GameObject::s_Head = NULL;
 GameObject* GameObject::s_Tail = NULL;
 
-extern RenderThread* g_RenderThread;
-
-GameObject::GameObject(const Vec2& position) : m_Position(position), m_Damping(0.1f), m_Mass(1.f), m_Scale(1.f), m_Next(NULL), m_Prev(NULL), m_Shape(Circle), m_Dead(false)
+GameObject::GameObject(const Vec2& position) : m_Damping(0.1f), m_Mass(1.f), m_Next(NULL), m_Prev(NULL), m_Shape(Circle), m_Dead(false)
 {
+    // TODO: Not all objects need this data sync'd since it will never really change on static objects like walls or pits,
+    // this could be a nice, simple optimization
+    g_XFormBuffer->Add(this);
+
+    SetPosition(position);
+    SetScale(1.0f);
+
 	if (s_Head == NULL)
 	{
 		s_Head = s_Tail = this;
@@ -20,8 +24,6 @@ GameObject::GameObject(const Vec2& position) : m_Position(position), m_Damping(0
 		m_Prev = s_Tail;
 		s_Tail = this;
 	}
-
-    g_RenderThread->SendMessage(new AddObjectMsg(this));
 }
 
 void GameObject::Unlink()
@@ -34,22 +36,35 @@ void GameObject::Unlink()
 		s_Head = m_Next;
 	if (s_Tail == this)
 		s_Tail = m_Prev;
-
-    g_RenderThread->SendMessage(new RemoveObjectMsg(this));
 }
 
 void GameObject::IntegratePhysics()
 {
-	// integrate physics
+    XFormObject* obj = g_XFormBuffer->Get(m_XFormId);
+
+    // integrate physics
 	Vec2 accel = m_Force / m_Mass;
 	Vec2 damping = -m_Damping * m_Velocity;
 	m_Velocity = m_Velocity + (accel + damping) * g_FrameTime;
 	m_Velocity = m_Velocity.Clamp(20.f);
-	m_PositionPrev = m_Position;
-	m_Position = m_Position + m_Velocity * g_FrameTime;
+	m_PositionPrev = obj->pos;
+	obj->pos = obj->pos + m_Velocity * g_FrameTime;
 
 	// clear force
 	m_Force = Vec2();
+}
+
+void GameObject::RemoveFromSharedData()
+{
+    GameObject* obj = s_Head;
+	while (obj != NULL)
+	{
+        // Remove dead objects from xform buffer
+		if (obj->m_Dead)
+            g_XFormBuffer->Remove(obj->m_XFormId);
+
+		obj = obj->m_Next;
+	}
 }
 
 void GameObject::CleanUp()
@@ -61,7 +76,10 @@ void GameObject::CleanUp()
 		{
 			GameObject* next = obj->m_Next;
             obj->Unlink();
-			obj = next;
+
+            delete obj;
+			
+            obj = next;
 		}
 		else
 			obj = obj->m_Next;

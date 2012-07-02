@@ -44,6 +44,10 @@ void Player::Hurt()
 		m_HitTimer = 0.3f;
 		m_Damage += 1.f;
 
+        // Update colormod based on damage
+        XFormObject* obj = g_XFormBuffer->Get(GetXFormId());
+        obj->colorMod = m_Damage;
+
 		if (m_Damage >= 5.f)
 			Destroy();
 	}
@@ -97,7 +101,7 @@ void Player::PreUpdate()
 void Player::PostUpdate()
 {
 	// heal
-	m_Damage = std::max(0.f, m_Damage - g_FrameTime * 0.5f);
+    m_Damage = std::max(0.f, m_Damage - g_FrameTime * 0.5f);
 	m_HitTimer = std::max(0.f, m_HitTimer - g_FrameTime);
 
 	// lock to world
@@ -121,12 +125,16 @@ void Player::PostUpdate()
 		SetPosition(Vec2(GetPosition().x, 15.f));
 		SetVelocity(Vec2(GetVelocity().x, 0.f));
 	}
+
+    // Update colormod based on damage
+    XFormObject* obj = g_XFormBuffer->Get(GetXFormId());
+    obj->colorMod = m_Damage;
 }
 
-void Player::Draw()
+void Player::Draw(XFormObject* obj)
 {
 	Color color;
-	switch (m_PlayerNum)
+	switch (m_PlayerNum) // Not m_PlayerNum never changes once created, no need to sync in xformobject
 	{
 	case NOne:
 		color = Color(0.1f, 0.1f, .9f, 1.f);
@@ -143,10 +151,10 @@ void Player::Draw()
 	}
 
 	const Color hurt(1.f, 0.5f, 0.f, 1.f);
-	float t = (5.f - m_Damage) / 5.f;
+	float t = (5.f - obj->colorMod) / 5.f;
 	color = t * color + (1.f - t) * hurt;
 
-	DrawCircle(0.5f * GetScale(), Color(0.f, 1.f, 1.f, 1.f));
+	DrawCircle(0.5f * obj->scale, Color(0.f, 1.f, 1.f, 1.f));
 	DrawCircle(0.5f, color);
 }
 

@@ -1,108 +1,122 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Render Thread">
+      <UniqueIdentifier>{b9d2038b-9dc1-4d2a-9279-42d99de3e6ae}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Game">
+      <UniqueIdentifier>{c8001378-f759-4305-8726-3465bf4ead91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Game\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Render Thread\Source Files">
+      <UniqueIdentifier>{c5e11109-8171-4338-b85e-5a751fd669b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render Thread\Header Files">
+      <UniqueIdentifier>{c23f4800-41de-4296-9582-495ccaeeee1a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Boid.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Collision.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Debug.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Math.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PCH.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Pit.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderThread.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shapes.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Vec2.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Wall.h">
-      <Filter>Header Files</Filter>
+      <Filter>Game\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\AlignedAlloc.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Render Thread\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\ConcurrentQueue.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Render Thread\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderThread.hpp">
+      <Filter>Render Thread\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\ScopedLock.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Render Thread\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XFormBuffer.hpp">
+      <Filter>Render Thread\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Collision.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Graphics.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PCH.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Pit.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderThread.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Wall.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Boid.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Common\Timing.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="RenderThread.cpp">
+      <Filter>Render Thread\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XFormBuffer.cpp">
+      <Filter>Render Thread\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\ScopedLock.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Render Thread\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\Timing.cpp">
+      <Filter>Render Thread\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

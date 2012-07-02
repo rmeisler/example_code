@@ -9,11 +9,12 @@
 #include <Xinput.h>
 #include <intsafe.h>
 
+#include "Debug.h"
+
 // Adding library include
 #pragma comment(lib, "XInput.lib")
 
 // RenderThread includes
 #include "../../Common/ConcurrentQueue.hpp"
+#include "XFormBuffer.hpp"
 #include <vector>
-
-#include "Debug.h"

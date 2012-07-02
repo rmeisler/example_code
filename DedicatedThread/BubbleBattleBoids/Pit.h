@@ -12,7 +12,7 @@ public:
 
 	virtual void PreUpdate();
 	virtual void PostUpdate() {}
-	virtual void Draw();
+	virtual void Draw(XFormObject* obj);
 	virtual void Collision(GameObject* other, const Vec2& point, const Vec2& normal);
 
 private:

@@ -22,18 +22,27 @@ extern Player::PlayerNum g_Winner;
 extern int g_NumPlayers;
 
 // RenderThread globals
-static unsigned int NUM_MESSAGES_PER_LOOP = 10;
 RenderThread* g_RenderThread = NULL;
+extern XFormBuffer* g_XFormBuffer;
+
+// Use this to test timing
+void InitTimer();
+void StartTime();
+double GetTime();
 
 RenderThread::RenderThread(int argc, char** argv) : mRunning(true), mArgC(argc), mArgV(argv)
 {
+    mBufferHandle.bufferPtr = 0;
+    mBufferHandle.bufferSize = 0;
+
     mThreadHnd = CreateThread(0, 0, ThreadFunction, 0, 0, 0);
 }
 
 RenderThread::~RenderThread()
 {
+    // Cleanup thread
     mRunning = false;
-
+    
     WaitForSingleObject(mThreadHnd, 1000);
     CloseHandle(mThreadHnd);
 }
@@ -43,59 +52,45 @@ void RenderThread::SendMessage(Message* msg)
     mQueue.push(msg);
 }
 
-void RenderThread::Render()
-{
-    // Since render thread never really writes to object parameters, it only reads them,
-    // we can simply let GameObjects act as read-only shared data and not worry about
-    // any synchronization issues
-
-    // Note that we keep a separate container of GameObjects on the render thread, aside from the
-    // intrusive list that the main thread uses. This is so we can unlink the objects from the main
-    // thread while maintaining references on the render thread, such that each thread can remove
-    // the object when they are good and ready
-    for( auto itr = mRenderObjects.begin(); itr != mRenderObjects.end(); itr++ )
-    {
-		glPushMatrix();
-		glTranslatef((*itr)->GetPosition().x, (*itr)->GetPosition().y, 0.f);
-		(*itr)->Draw();
-		glPopMatrix();
-	}
-}
-
 void RenderThread::HandleMessages()
 {
     Message* msg = NULL;
     unsigned int messagesHandled = 0;
-
-    // Handle some set number of messages per loop, don't want to be overwhelmed by message
-    // processing and forget about actually rendering the scene!
-    while( messagesHandled++ < NUM_MESSAGES_PER_LOOP &&
-           mQueue.try_pop(msg) )
+    
+    while( mQueue.try_pop(msg) )
     {
+        // Handle messages...
         switch(msg->type)
         {
-            case ADD_OBJECT_MSG:
-                mRenderObjects.push_back(((AddObjectMsg*)msg)->obj);
-            break;
-
-            case REMOVE_OBJECT_MSG:
-                GameObject* obj = ((RemoveObjectMsg*)msg)->obj;
-
-                // Find object and remove it
-                for( auto itr = mRenderObjects.begin(); itr != mRenderObjects.end(); itr++ )
-                {
-                    if( obj == *itr )
-                    {
-                        // For destruction of objects to happen safely, the main thread
-                        // only ever unlinks objects. Render thread destroys them
-                        mRenderObjects.erase(itr);
-                        delete obj;
-                        break;
-                    }
-                }
-            break;
+            case 0:
+                break;
         }
+
+        // Handle some set number of messages per loop, don't want to be overwhelmed by message
+        // processing and forget about actually rendering the scene!
+        if( messagesHandled++ < NUM_MESSAGES_PER_LOOP )
+            break;
     }
+}
+
+void RenderThread::Render()
+{
+    // We don't really have any special culling logic or ordering, so we can just walk the xform buffer and draw each object
+    for( unsigned int i = 0; i < mBufferHandle.bufferSize; i++ )
+    {
+        XFormObject* obj = &mBufferHandle.bufferPtr[i];
+
+		glPushMatrix();
+		glTranslatef(obj->pos.x, obj->pos.y, 0.f);
+        obj->owner->Draw(obj);
+
+		glPopMatrix();
+	}
+}
+
+void RenderThread::Sync()
+{
+    mBufferHandle = g_XFormBuffer->SyncBuffer();
 }
 
 void Display();
@@ -120,6 +115,8 @@ DWORD WINAPI RenderThread::ThreadFunction(void* data)
 // Render the scene
 void Display()
 {
+    StartTime();
+    
 	// Initialize the rendering
 	glViewport(0, 0, 800, 600);
 
@@ -184,6 +181,9 @@ void Display()
 
     // Handle messages
     g_RenderThread->HandleMessages();
+
+    // Sync up render data with data from main thread
+    g_RenderThread->Sync();
 
     // Redraw immediately
 	glutPostRedisplay();

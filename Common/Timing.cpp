@@ -14,6 +14,13 @@ void InitTimer()
     start = temp.QuadPart;
 }
 
+void StartTime()
+{
+    LARGE_INTEGER temp;
+    QueryPerformanceCounter(&temp);
+    start = temp.QuadPart;
+}
+
 double GetTime()
 {
     LARGE_INTEGER temp;

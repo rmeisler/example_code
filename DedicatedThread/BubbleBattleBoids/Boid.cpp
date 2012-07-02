@@ -94,6 +94,10 @@ void Boid::PreUpdate()
 	m_Anger += Rand(0.f, 0.05f) * g_FrameTime;
 	m_Anger = Clamp(m_Anger, 0.f, 1.f);
 
+    // Update color mod based on anger
+    XFormObject* obj = g_XFormBuffer->Get(GetXFormId());
+    obj->colorMod = m_Anger;
+
 	// calculate flocking steering
 	AddForce(Flock(boids, count));
 
@@ -217,9 +221,9 @@ void Boid::PostUpdate()
 {
 }
 
-void Boid::Draw()
+void Boid::Draw(XFormObject* obj)
 {
-	DrawCircle(0.5f * GetScale(), Color(1.f, 1.f - m_Anger * 0.5f, 0.f, 1.f));
+	DrawCircle(0.5f * obj->scale, Color(1.f, 1.f - obj->colorMod * 0.5f, 0.f, 1.f));
 }
 
 Vec2 Boid::Steer(const Vec2& target) const
@@ -275,6 +279,10 @@ void Boid::Collision(GameObject* other, const Vec2& point, const Vec2& normal)
 	else if (other->GetType() == TBoid)
 	{
 		m_Anger += g_FrameTime;
+        
+        // Update color mod based on anger
+        XFormObject* obj = g_XFormBuffer->Get(GetXFormId());
+        obj->colorMod = m_Anger;
 	}
 	else if (other->GetType() == TWall)
 	{

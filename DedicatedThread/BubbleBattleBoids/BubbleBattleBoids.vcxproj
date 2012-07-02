@@ -73,6 +73,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -99,6 +101,7 @@
     <ClInclude Include="Shapes.hpp" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Wall.h" />
+    <ClInclude Include="XFormBuffer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\ScopedLock.cpp" />
@@ -113,6 +116,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="RenderThread.cpp" />
     <ClCompile Include="Wall.cpp" />
+    <ClCompile Include="XFormBuffer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

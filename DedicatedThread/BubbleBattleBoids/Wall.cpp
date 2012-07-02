@@ -31,7 +31,7 @@ void Wall::Collision(GameObject* other, const Vec2& point, const Vec2& normal)
 	other->SetPosition(point + normal * other->GetScale() * 0.51f);
 }
 
-void Wall::Draw()
+void Wall::Draw(XFormObject* obj)
 {
-	DrawRect(GetScale(), GetScale(), Color());
+	DrawRect(obj->scale, obj->scale, Color());
 }

@@ -23,7 +23,7 @@ void Pit::PreUpdate()
 	}
 }
 
-void Pit::Draw()
+void Pit::Draw(XFormObject* obj)
 {
 	DrawRect(1.f, 1.f, Color(0.f, 0.f, 0.f, 1.f));
 }

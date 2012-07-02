@@ -2,6 +2,8 @@
 
 #include "Vec2.h"
 
+extern XFormBuffer* g_XFormBuffer;
+
 // Base game object
 class GameObject
 {
@@ -33,12 +35,20 @@ public:
 	bool IsDead() const { return m_Dead; }
 	void Destroy() { m_Dead = true; }
 
-	const Vec2& GetPosition() const { return m_Position; }
-	void SetPosition(const Vec2& position) { m_Position = m_PositionPrev = position; }
+	const Vec2& GetPosition() const { return g_XFormBuffer->Get(m_XFormId)->pos; }
+	void SetPosition(const Vec2& position)
+    {
+        XFormObject* obj = g_XFormBuffer->Get(m_XFormId);
+        obj->pos = m_PositionPrev = position;
+    }
 	const Vec2& GetPositionPrev() const { return m_PositionPrev; }
 
-	float GetScale() const { return m_Scale; }
-	void SetScale(float scale) { m_Scale = scale; }
+	float GetScale() const { return g_XFormBuffer->Get(m_XFormId)->scale; }
+	void SetScale(float scale)
+    {
+        XFormObject* obj = g_XFormBuffer->Get(m_XFormId);
+        obj->scale = scale;
+    }
 
 	const Vec2& GetVelocity() const { return m_Velocity; }
 	void SetVelocity(const Vec2& velocity) { m_Velocity = velocity; }
@@ -52,9 +62,13 @@ public:
 	float GetMass() const { return m_Mass; }
 	void SetMass(float mass) { m_Mass = mass; }
 
+    // Set id for accessing shared render data
+    unsigned int GetXFormId() const { return m_XFormId; }
+    void SetXFormId(unsigned int id) { m_XFormId = id; }
+
 	virtual void PreUpdate() = 0;
 	virtual void PostUpdate() = 0;
-	virtual void Draw() = 0;
+	virtual void Draw(XFormObject*) = 0;
 	virtual void Collision(GameObject* other, const Vec2& point, const Vec2& normal) = 0;
 
 	void IntegratePhysics();
@@ -63,15 +77,16 @@ public:
 
 	static GameObject* All() { return s_Head; }
 	static void CleanUp();
+    static void RemoveFromSharedData();
 
 private:
-	Vec2 m_Position;
 	Vec2 m_PositionPrev;
 	Vec2 m_Velocity;
 	Vec2 m_Force;
 	float m_Damping;
 	float m_Mass;
-	float m_Scale;
+
+    unsigned int m_XFormId;
 
 	GameObject* m_Next;
 	GameObject* m_Prev;

@@ -17,7 +17,7 @@
 #include "RenderThread.hpp"
 
 // Game logic function
-static void Update();
+static void RunGameLoop();
 static void UpdateInput();
 static void UpdatePhysics();
 static void UpdateGameState();
@@ -41,12 +41,22 @@ Player::PlayerNum g_Winner = Player::NNobody;
 int g_NumPlayers = 0;
 double g_TotalTime = 0.f;
 
+// RenderThread globals
 extern RenderThread* g_RenderThread;
+XFormBuffer* g_XFormBuffer;
+
+// Use this to test timing
+void InitTimer();
+void StartTime();
+double GetTime();
 
 // Entry point
 int main(int argc, char** argv)
 {
+    g_XFormBuffer = new XFormBuffer();
     g_RenderThread = new RenderThread(argc, argv);
+
+    InitTimer();
 
 	ResetGame();
 
@@ -55,10 +65,7 @@ int main(int argc, char** argv)
 	QueryPerformanceCounter(&g_LastFrame);
 
     // Game loop
-    while( true )
-    {
-        Update();
-    }
+    RunGameLoop();
 
 	return 0;
 }
@@ -119,35 +126,45 @@ void ResetGame()
 	new Pit(Vec2(16.f, 14.f));
 }
 
-void Update()
+void RunGameLoop()
 {
-	// update frame time
-	LARGE_INTEGER now;
-	QueryPerformanceCounter(&now);
-	g_FrameTime = (now.QuadPart - g_LastFrame.QuadPart) / (double)g_Frequency.QuadPart;
-	g_FrameTime = std::min(g_FrameTime, 1.f / 30.f);
-	g_LastFrame = now;
+    while( true )
+    {
+	    // update frame time
+	    LARGE_INTEGER now;
+	    QueryPerformanceCounter(&now);
+	    g_FrameTime = (now.QuadPart - g_LastFrame.QuadPart) / (double)g_Frequency.QuadPart;
+	    g_FrameTime = std::min(g_FrameTime, 1.f / 30.f);
+	    g_LastFrame = now;
 
-	// run game logic
-	UpdateInput();
+        // exit logic
+        if( GetAsyncKeyState(VK_ESCAPE) & 0x8000 )
+            break;
 
-	if (g_State == StatePlay)
-	{
-		g_TotalTime += g_FrameTime;
+	    // run game logic
+	    UpdateInput();
 
-		for (GameObject* obj = GameObject::All(); obj != NULL; obj = obj->GetNext())
-			obj->PreUpdate();
+	    if (g_State == StatePlay)
+	    {
+		    g_TotalTime += g_FrameTime;
 
-		UpdatePhysics();
+		    for (GameObject* obj = GameObject::All(); obj != NULL; obj = obj->GetNext())
+			    obj->PreUpdate();
 
-		for (GameObject* obj = GameObject::All(); obj != NULL; obj = obj->GetNext())
-			obj->PostUpdate();
+		    UpdatePhysics();
 
-		UpdateGameState();
-	}
+		    for (GameObject* obj = GameObject::All(); obj != NULL; obj = obj->GetNext())
+			    obj->PostUpdate();
 
-	// clean dead objects
-	GameObject::CleanUp();
+		    UpdateGameState();
+	    }
+
+	    // Remove dead objects from shared data
+	    GameObject::RemoveFromSharedData();
+
+        // Send our xform buffer to the render thread
+        g_XFormBuffer->CopyBuffer();
+    }
 }
 
 // Game state
@@ -163,7 +180,7 @@ void UpdateInput()
 			if (g_State == StateStart && g_Players[i] == NULL && 0 != (state.Gamepad.wButtons & XINPUT_GAMEPAD_A))
 			{
 				++g_NumPlayers;
-				new Player((Player::PlayerNum)i);
+                new Player((Player::PlayerNum)i);
 			}
 
 			if (g_State == StateStart && g_Players[i] != NULL && 0 != (state.Gamepad.wButtons & XINPUT_GAMEPAD_B))
