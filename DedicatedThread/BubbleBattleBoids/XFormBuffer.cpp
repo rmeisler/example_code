@@ -27,7 +27,7 @@ void XFormBuffer::Add(GameObject* object)
     object->SetXFormId(mActualBufferSize);
 
     // Zero out xform object
-    memset(&mBufferPtrB[mActualBufferSize], 0, sizeof(XFormObject));
+    memset(mBufferPtrB + mActualBufferSize, 0, sizeof(XFormObject));
 
     // Set object pointer on xform object
     mBufferPtrB[mActualBufferSize].owner = object;
@@ -73,13 +73,21 @@ void XFormBuffer::CopyBuffer()
 {
     WaitForSingleObject(mRenderCompleteEvent, INFINITE);
     
-    // Essentially all we're doing is copying the results of the main thread processing over to
-    // the render thread's xform buffer
-    memcpy(&mBufferPtrA[0], &mBufferPtrB[0], sizeof(XFormObject) * mActualBufferSize);
+    // Swap buffers
+    std::swap(mBufferPtrA, mBufferPtrB);
+
+    // Update buffer size
     mDirtyBufferSize = mActualBufferSize;
     
     // When using a render thread, object cleanup is only safe during sync!
     GameObject::CleanUp();
 
+    // Tell render thread he can continue
     SetEvent(mBufferSwapEvent);
+
+    // We can do memcpy on our own time...
+
+    // Essentially all we're doing is copying the results of the main thread processing over to
+    // the render thread's xform buffer
+    memcpy(mBufferPtrB, mBufferPtrA, sizeof(XFormObject) * mActualBufferSize);
 }

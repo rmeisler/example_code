@@ -48,8 +48,11 @@ private:
 
     // Two buffers, A is read by render thread, B is written/read by main thread
     // At end of frame we do a sync where we copy the contents of buffer B into A
-    XFormObject mBufferPtrA[BUFFER_CAPACITY];
-    XFormObject mBufferPtrB[BUFFER_CAPACITY];
+    XFormObject* mBufferPtrA;
+    XFormObject* mBufferPtrB;
+
+    XFormObject mBufferA[BUFFER_CAPACITY];
+    XFormObject mBufferB[BUFFER_CAPACITY];
 
     // Buffer size as modified by main thread when adding new objects
     unsigned int mActualBufferSize;
