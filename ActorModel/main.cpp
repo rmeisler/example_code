@@ -78,9 +78,6 @@ public:
     Actor* recvActor = recv.Get();
     if( recvActor )
         recvActor->Send(AlignedAlloc<PiResultMsg>(acc));
-
-    // Destroys actor after handler returns
-    Stop();
   }
   
   ActorHandle recv;
