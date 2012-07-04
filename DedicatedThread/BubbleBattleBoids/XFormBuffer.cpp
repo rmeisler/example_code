@@ -53,41 +53,35 @@ XFormObject* XFormBuffer::Get(unsigned int index)
     return &mBufferPtrB[index];
 }
 
-XFormBufferHandle XFormBuffer::SyncBuffer()
+XFormObject* XFormBuffer::GetRenderBuffer()
+{
+    return mBufferPtrA;
+}
+
+void XFormBuffer::SyncBuffer()
 {
     // Signal render event
     SetEvent(mRenderCompleteEvent);
-
-    // Wait for buffer copy before continuing
-    WaitForSingleObject(mBufferSwapEvent, INFINITE);
-
-    // Create a new buffer handle (This isn't really necessary besides getting an updated buffersize, just lazy design)
-    XFormBufferHandle handle;
-    handle.bufferPtr = mBufferPtrA;
-    handle.bufferSize = mDirtyBufferSize;
-
-    return handle;
 }
 
 void XFormBuffer::CopyBuffer()
 {
     WaitForSingleObject(mRenderCompleteEvent, INFINITE);
     
-    // Swap buffers
-    std::swap(mBufferPtrA, mBufferPtrB);
-
     // Update buffer size
-    mDirtyBufferSize = mActualBufferSize;
+    InterlockedExchange(&mDirtyBufferSize, mActualBufferSize);
+
+    // Swap buffers
+    XFormObject* ptrA = mBufferPtrA;
+    InterlockedExchangePointer(&mBufferPtrA, mBufferPtrB);
+    mBufferPtrB = ptrA;
     
-    // When using a render thread, object cleanup is only safe during sync!
-    GameObject::CleanUp();
-
-    // Tell render thread he can continue
-    SetEvent(mBufferSwapEvent);
-
     // We can do memcpy on our own time...
 
     // Essentially all we're doing is copying the results of the main thread processing over to
     // the render thread's xform buffer
     memcpy(mBufferPtrB, mBufferPtrA, sizeof(XFormObject) * mActualBufferSize);
+
+    // No one should be referencing old dead objects now, cleanup!
+    GameObject::CleanUp();
 }

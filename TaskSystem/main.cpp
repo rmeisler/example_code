@@ -47,9 +47,7 @@ public:
         }
         
         printf("Pi = %f\nThis took %f milliseconds!\n"
-               "Try running this multiple times, if a"
-               " thread is scheduled onto a new core "
-               "your timestamp will look overly large", piCalc, GetTime());
+               "Try running this multiple times to get an average time", piCalc, GetTime());
     }
 
 };
@@ -80,9 +78,7 @@ void Serial()
     }
 
     printf("Pi = %f\nThis took %f milliseconds!\n"
-           "Try running this multiple times, if a"
-           " thread is scheduled onto a new core "
-           "your timestamp will look overly large", acc, GetTime());
+           "Try running this multiple times to get an average time", acc, GetTime());
 }
 
 void main()

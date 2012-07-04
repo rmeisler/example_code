@@ -18,9 +18,6 @@
     <ClCompile Include="ActorFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MailBox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,9 +41,6 @@
     <ClInclude Include="ActorHandle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MailBox.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Scheduler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -56,7 +50,7 @@
     <ClInclude Include="..\Common\ConcurrentQueue.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\AlignedAlloc.hpp">
+    <ClInclude Include="CreateActorMsg.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\ScopedLock.hpp">

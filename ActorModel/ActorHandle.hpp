@@ -1,15 +1,16 @@
 #pragma once
 
-class Actor;
-class ActorFactory;
+class Message;
 
 struct ActorHandle
 {
-    ActorHandle() : factory(0), id(0), index(0) {}
-    ActorHandle(ActorFactory* factory, unsigned int id, unsigned int index);
-    Actor* Get();
+    ActorHandle() : id(0), index(0) {}
+    ActorHandle(unsigned int id, unsigned int index);
+    
+    void Send(Message* msg);
 
-    ActorFactory* factory;
     unsigned int id;
     unsigned int index;
+    unsigned int threadId;
+
 };

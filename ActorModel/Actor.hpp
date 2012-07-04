@@ -2,7 +2,6 @@
 
 #include "ActorHandle.hpp"
 
-__declspec(align(64))
 class Message
 {
 public:
@@ -14,7 +13,8 @@ public:
 
 };
 
-__declspec(align(64))
+// No one should ever call functions on actor accept owning thread
+// All access to actor is through ActorHandle, which can only submit messages
 class Actor
 {
 public:
@@ -23,19 +23,11 @@ public:
 
     virtual void HandleMessage(Message* msg) = 0;
 
-    void Send(Message* msg);
-    void Spawn();
-
     void Stop();
     bool IsStopped() const;
 
 private:
 
-    friend class Scheduler;
-    friend class ActorFactory;
-
-    ActorHandle mHandle;
-    unsigned int mThreadId;
     bool mStopped;
 
 };

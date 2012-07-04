@@ -4,7 +4,7 @@
 #include "ConcurrentQueue.hpp"
 
 class Message;
-class Actor;
+struct ActorHandle;
 
 class Thread
 {
@@ -34,7 +34,7 @@ public:
     Scheduler();
     ~Scheduler();
 
-    void AssignToThread(Actor* actor);
+    void AssignToThread(ActorHandle& actor);
     void Send(Message* msg);
     void DedicateMainThread();
     

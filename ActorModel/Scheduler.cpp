@@ -1,7 +1,6 @@
 #include "Scheduler.hpp"
-#include "Actor.hpp"
+#include "CreateActorMsg.hpp"
 #include "ActorFactory.hpp"
-#include "AlignedAlloc.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -50,20 +49,29 @@ DWORD WINAPI Thread::ThreadFunction(LPVOID data)
 
         if( thread->mQueue.try_pop(msg) )
         {
-            Actor* ref = msg->to.Get();
-            
-            // If this actor ref is alive
-            if( ref )
+            if( msg->type == CreateActorMsg::id )
             {
-                ref->HandleMessage(msg);
+                // Construct actor
+                gActorFactory->ThreadConstruct(msg->to);
+            }
+            else
+            {
+                // ONLY OWNING THREAD SHOULD EVER TOUCH RAW ACTOR DATA
+                Actor* ref = gActorFactory->Get(msg->to.id, msg->to.index);
+            
+                // If this actor ref is alive
+                if( ref )
+                {
+                    ref->HandleMessage(msg);
 
-                // Free stopped actor
-                if( ref->IsStopped() )
-                    gActorFactory->Destroy(msg->to);
+                    // Free stopped actor
+                    if( ref->IsStopped() )
+                        gActorFactory->Destroy(msg->to);
+                }
             }
 
             // Free message
-            AlignedFree(msg);
+            delete msg;
         }
     }
 
@@ -93,30 +101,18 @@ Scheduler::~Scheduler()
     }
 }
 
-void Scheduler::AssignToThread(Actor* actor)
+void Scheduler::AssignToThread(ActorHandle& actor)
 {
     // Round robin scheduling
-    actor->mThreadId = mCurrentThreadIndex;
+    actor.threadId = mCurrentThreadIndex;
     mCurrentThreadIndex = (mCurrentThreadIndex + 1) % mThreadPool.size();
 }
 
 void Scheduler::Send(Message* msg)
 {
-    Actor* ref = msg->to.Get();
-
-    // TODO: Debug assert on ref == null
-
-    if( ref && !ref->IsStopped() )
-    {
-        // Figure out which thread to send this to
-        unsigned int threadIndex = ref->mThreadId;
-        mThreadPool[threadIndex]->Enqueue(msg);
-    }
-    else
-    {
-        // Actor dead, message not sent. Delete message now
-        AlignedFree(msg);
-    }
+    // Figure out which thread to send this to
+    unsigned int threadIndex = msg->to.threadId;
+    mThreadPool[threadIndex]->Enqueue(msg);
 }
 
 void Scheduler::DedicateMainThread()

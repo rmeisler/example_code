@@ -5,13 +5,12 @@
 // Actor Model system. Though this is fairly contrived, it's not
 // unlike how you might use actors for physics broadphase/narrowphase.
 // 
-// This is primarily to demonstrate how actors can be used to
-// accomplish the same things that tasks can.
+// This is primarily to demonstrate how actors and message passing
+// might work.
 /////////////////////////////////////////////////////////////////////
 #include "Actor.hpp"
 #include "Scheduler.hpp"
 #include "ActorFactory.hpp"
-#include "AlignedAlloc.hpp"
 
 #include <stdio.h>
 
@@ -46,9 +45,7 @@ public:
     {
       double result = totalPiAcc;
       printf("Pi = %f\nThis took %f milliseconds!\n"
-             "Try running this multiple times, if a"
-             " thread is scheduled onto a new core "
-             "your timestamp will look overly large", result, GetTime());
+             "Try running this multiple times to get an average time", result, GetTime());
 
       Stop();
     }
@@ -75,9 +72,7 @@ public:
       acc += 4.0 * (1.0 - (i % 2) * 2) / (2 * i + 1);
     }
     
-    Actor* recvActor = recv.Get();
-    if( recvActor )
-        recvActor->Send(AlignedAlloc<PiResultMsg>(acc));
+    recv.Send(new PiResultMsg(acc));
   }
   
   ActorHandle recv;
@@ -93,10 +88,10 @@ void Parallel()
     // Can tweak with actor load for perf
     for( int i = 0; i < 40; i++ )
     {
-        auto actor = gActorFactory->Create<PiWorkerActor>(actorRecv, i * 1000000, (i + 1) * 1000000 - 1);
+        auto actor = gActorFactory->Create<PiWorkerActor>(actorRecv, i * 1000000, (i + 1) * 1000000);
 
         // Sends message then immediately stops actor
-        actor.Get()->Spawn();
+        actor.Send(new Message(0));
     }
 
     gScheduler->DedicateMainThread();
@@ -112,9 +107,7 @@ void Serial()
     }
 
     printf("Pi = %f\nThis took %f milliseconds!\n"
-           "Try running this multiple times, if a"
-           " thread is scheduled onto a new core "
-           "your timestamp will look overly large", acc, GetTime());
+           "Try running this multiple times to get an average time", acc, GetTime());
 }
 
 void main()

@@ -82,18 +82,16 @@
     <ClCompile Include="..\Common\Timing.cpp" />
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="ActorFactory.cpp" />
-    <ClCompile Include="MailBox.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Scheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Common\AlignedAlloc.hpp" />
     <ClInclude Include="..\Common\ConcurrentQueue.hpp" />
     <ClInclude Include="..\Common\ScopedLock.hpp" />
     <ClInclude Include="Actor.hpp" />
     <ClInclude Include="ActorFactory.hpp" />
     <ClInclude Include="ActorHandle.hpp" />
-    <ClInclude Include="MailBox.hpp" />
+    <ClInclude Include="CreateActorMsg.hpp" />
     <ClInclude Include="Scheduler.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

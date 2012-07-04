@@ -1,41 +1,38 @@
 #include "ActorFactory.hpp"
-#include "AlignedAlloc.hpp"
-#include "Actor.hpp"
+#include "CreateActorMsg.hpp"
+#include "Scheduler.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 ActorFactory* gActorFactory = new ActorFactory();
 
-ActorHandle::ActorHandle(ActorFactory* factory, unsigned int id, unsigned int index)
-    : factory(factory), id(id), index(index)
+// WARNING, because of thread assignment, creating an ActorHandle with same id/index
+// will NOT result in getting a handle to the same Actor! Use copy ctor!
+ActorHandle::ActorHandle(unsigned int id, unsigned int index)
+    : id(id), index(index)
 {
-
+    gScheduler->AssignToThread(*this);
 }
 
-Actor* ActorHandle::Get()
+void ActorHandle::Send(Message* msg)
 {
-    // TODO: Debug assert on null factory (i.e. default constructed handle being accessed)
-    return factory->Get(id, index);
+    msg->to = *this;
+    gScheduler->Send(msg);
 }
 
 // Note: Always need to default LightMutex to 0, perhaps a usability downside to making LightMutex a simple typedef
 ActorFactory::ActorFactory() : mIdCount(0), mFreeIndexHead(-1)
 {
-    InitializeCriticalSection(&mMutex);
+    InitializeSRWLock(&mMutex);
 
     Grow();
 }
 
-ActorFactory::~ActorFactory()
-{
-    DeleteCriticalSection(&mMutex);
-}
-
-ActorHandle ActorFactory::CreateHandle(Actor* actor)
+ActorHandle ActorFactory::CreateHandle(ActorCreator& creator)
 {
     // Lock this whole function
-    ScopedLock _(mMutex);
+    AcquireSRWLockExclusive(&mMutex);
 
     // Need to grow pool
     if( mFreeIndexHead == -1 )
@@ -44,43 +41,65 @@ ActorHandle ActorFactory::CreateHandle(Actor* actor)
     Index* freeIndex = &mSlots[mFreeIndexHead];
     unsigned curIndex = mFreeIndexHead;
 
-    freeIndex->actorRef = actor;
+    freeIndex->actorRef.creator = creator;
     freeIndex->id = mIdCount++;
     mFreeIndexHead = freeIndex->nextFreeIndex;
 
-    // Construct new actor handle
-    ActorHandle handle(this, freeIndex->id, curIndex);
+    unsigned int newIndex = freeIndex->id;
 
-    // Set internal handle on Actor
-    actor->mHandle = handle;
+    ReleaseSRWLockExclusive(&mMutex);
 
-    return handle;
+    // Schedule message to construct local copy of actor on thread
+    // it is important that we use a local copy as it avoids
+    // false sharing!
+    Message* msg = new CreateActorMsg();
+    msg->to = ActorHandle(newIndex, curIndex);
+
+    gScheduler->Send(msg);
+
+    return msg->to;
+}
+
+void ActorFactory::ThreadConstruct(ActorHandle& handle)
+{
+    // Build actor and overwrite actorRef union
+    Index* indexRef = &mSlots[handle.index];
+    ActorCreator& creator = indexRef->actorRef.creator;
+    
+    Actor* newActorRef = creator.ctor(creator.paramBuffer);
+    free(creator.paramBuffer);
+
+    indexRef->actorRef.actorRef = newActorRef;
 }
 
 void ActorFactory::Destroy(ActorHandle& handle)
 {
-    // Lock this whole function
-    ScopedLock _(mMutex);
+    // Writer lock
+    AcquireSRWLockExclusive(&mMutex);
 
     Index* index = &mSlots[handle.index];
 
-    AlignedFree(index->actorRef);
+    delete index->actorRef.actorRef;
 
-    index->actorRef = NULL;
+    index->actorRef.actorRef = NULL;
     index->id = FREE_SLOT;
     index->nextFreeIndex = mFreeIndexHead;
 
     mFreeIndexHead = handle.index;
+
+    ReleaseSRWLockExclusive(&mMutex);
 }
 
 Actor* ActorFactory::Get(unsigned int id, unsigned int index)
 {
-    // Lock this whole function
-    ScopedLock _(mMutex);
+    // Reader lock
+    AcquireSRWLockShared(&mMutex);
 
     Index* indexRef = &mSlots[index];
 
-    return indexRef->id == id ? indexRef->actorRef : NULL;
+    ReleaseSRWLockShared(&mMutex);
+
+    return indexRef->id == id ? indexRef->actorRef.actorRef : NULL;
 }
 
 void ActorFactory::Grow()
@@ -90,7 +109,7 @@ void ActorFactory::Grow()
     {
         Index newIndex;
 
-        newIndex.actorRef = NULL;
+        newIndex.actorRef.actorRef = NULL;
         newIndex.id = FREE_SLOT;
         newIndex.nextFreeIndex = mFreeIndexHead;
         mFreeIndexHead = curIndex;
