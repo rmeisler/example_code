@@ -1,6 +1,9 @@
 #include "PCH.h"
 #include "GameObject.h"
 #include "Game.h"
+#include "RenderThread.hpp"
+
+extern RenderThread* g_RenderThread;
 
 GameObject* GameObject::s_Head = NULL;
 GameObject* GameObject::s_Tail = NULL;
@@ -54,19 +57,6 @@ void GameObject::IntegratePhysics()
 	m_Force = Vec2();
 }
 
-void GameObject::RemoveFromSharedData()
-{
-    GameObject* obj = s_Head;
-	while (obj != NULL)
-	{
-        // Remove dead objects from xform buffer
-		if (obj->m_Dead)
-            g_XFormBuffer->Remove(obj->m_XFormId);
-
-		obj = obj->m_Next;
-	}
-}
-
 void GameObject::CleanUp()
 {
 	GameObject* obj = s_Head;
@@ -75,11 +65,14 @@ void GameObject::CleanUp()
 		if (obj->m_Dead)
 		{
 			GameObject* next = obj->m_Next;
-            obj->Unlink();
+      obj->Unlink();
 
-            delete obj;
-			
-            obj = next;
+      g_XFormBuffer->Remove(obj->m_XFormId);
+
+      // Can't safely delete shared memory from here! Must do it from render thread
+			g_RenderThread->Send(new KillObjectMsg(obj));
+
+      obj = next;
 		}
 		else
 			obj = obj->m_Next;

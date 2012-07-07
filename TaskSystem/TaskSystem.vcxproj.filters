@@ -41,9 +41,6 @@
     <ClInclude Include="TaskList.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\AlignedAlloc.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\ConcurrentQueue.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -7,7 +7,6 @@
 /////////////////////////////////////////////////////////////////////
 #include "Scheduler.hpp"
 #include "TaskList.hpp"
-#include "AlignedAlloc.hpp"
 
 #include <stdio.h>
 
@@ -34,42 +33,46 @@ public:
 
 };
 
-class PiApproxTaskList : public TaskList<PiApproxTask>
-{
-public:
-
-    virtual void OnComplete(const std::vector<PiApproxTask*>& tasks)
-    {
-        double piCalc = 0.0;
-        for( auto itr = tasks.begin(); itr != tasks.end(); itr++ )
-        {
-            piCalc += (*itr)->acc;
-        }
-        
-        printf("Pi = %f\nThis took %f milliseconds!\n"
-               "Try running this multiple times to get an average time", piCalc, GetTime());
-    }
-
-};
-
 void Parallel()
 {
-    auto taskList = new PiApproxTaskList();
+    auto taskList = new TaskList<PiApproxTask>();
+    PiApproxTask* tasks[4];
     
     for( int i = 0; i < 4; i++ )
     {
-        taskList->Add(AlignedAlloc<PiApproxTask>(i * 10000000, (i + 1) * 10000000 - 1));
+        tasks[i] = new PiApproxTask(i * 10000000, (i + 1) * 10000000 - 1);
     }
     
-    taskList->SubmitAndWait();
+    // I do this to illustrate the overhead of actually dynamically allocating tasks,
+    // you should actually pool tasks, as it will give you a good performance boost!
+    // This is where declspec align becomes super important, if tasks are explicitly
+    // next to each other in memory and used on separate cores, we MUST use alignment
+    // to avoid false sharing.
+    InitTimer();
 
-    // Warning! In case you missed it in TaskList.hpp, I've designed TaskLists to be one-shot objects
-    // that cleanup all their tasks memory and their own after completing. This is a very efficient implementation,
-    // but also error prone. You can avoid this implementation if you use reference counting on Tasks/TaskLists
+    for( int i = 0; i < 4; i++ )
+    {
+      taskList->Add(tasks[i]);
+    }
+
+    taskList->SubmitAndWait();
+    
+    double piCalc = 0.0;
+    auto results = taskList->GetResults();
+    for( auto itr = results.begin(); itr != results.end(); itr++ )
+    {
+        piCalc += (*itr)->acc;
+    }
+
+    printf("Pi = %f\nThis took %f milliseconds!\n"
+            "Try running this multiple times", piCalc, GetTime());
+
+    delete taskList;
 }
 
 void Serial()
 {
+    InitTimer();
     double acc = 0.0;
     int start = 0, end = 40000000;
     for( int i = start; i < end; i++ )
@@ -78,13 +81,11 @@ void Serial()
     }
 
     printf("Pi = %f\nThis took %f milliseconds!\n"
-           "Try running this multiple times to get an average time", acc, GetTime());
+           "Try running this multiple times", acc, GetTime());
 }
 
 void main()
 {
-    InitTimer();
-
     Parallel();
 
     system("pause");

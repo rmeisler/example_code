@@ -29,6 +29,9 @@ DWORD WINAPI Thread::ThreadFunction(LPVOID data)
     // We should initialize each timer per thread, in case our frequency differs per core
     InitTimer();
 
+    // TODO: For data processing we will often want to make thread-local copies of data,
+    // this process will be much more efficient if we allocate some memory here in a pool, for fast access
+
     while( thread->mRunning )
     {
         thread->mScheduler->DoWork();
@@ -64,23 +67,15 @@ Scheduler::~Scheduler()
     }
 }
 
-void Scheduler::Update()
-{
-    TaskListBase* taskList = NULL;
-
-    while( mCompletedTaskLists.try_pop(taskList) )
-    {
-        taskList->OnComplete();
-    }
-}
-
-void Scheduler::AddCompletedTaskList(TaskListBase* taskList)
-{
-    mCompletedTaskLists.push(taskList);
-}
-
 void Scheduler::DoWork(unsigned int timeout)
 {
+    // TODO: If you see significant overhead on semaphore, it's because our
+    // thread went to sleep just before more work was added to queue.
+    // Fix this problem by first doing a 0 ms timeout check on sem, then
+    // spinning for some number of cycles, checking if there is any work to
+    // be done. Use YieldProcessor() at end of each spin loop to let OS know
+    // what you are doing. If we run out of spin cycles and there's still
+    // no work, only then fall asleep on semaphore. (Average spin count = 4000)
     if( WaitForSingleObject(mSemaphore, timeout) != WAIT_TIMEOUT )
     {
         Task* task = NULL;

@@ -6,15 +6,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-void TaskListBase::Dec(bool waiting)
+void TaskListBase::Dec()
 {
-    if( InterlockedDecrement(&mTaskCount) == 0 && !waiting )
-    {
-        gScheduler->AddCompletedTaskList(this);
-    }
+    // Decrement shared task count (InterlockedDec, don't want to miss an update to this value!)
+    InterlockedDecrement(&mTaskCount);
 }
 
 void Task::Done()
 {
-    mParentList->Dec(mWaiting);
+    mParentList->Dec();
 }

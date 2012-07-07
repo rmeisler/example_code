@@ -14,9 +14,7 @@ public:
     TaskListBase() : mTaskCount(0) {}
     virtual ~TaskListBase() {}
 
-    virtual void OnComplete() = 0;
-
-    void Dec(bool waiting);
+    void Dec();
     
 protected:
 
@@ -34,8 +32,15 @@ class TaskList : public TaskListBase
 {
 public:
 
-    virtual void OnComplete(const std::vector<TaskType*>& tasks) = 0;
-
+    ~TaskList()
+    {
+        // Cleanup tasks
+        for( auto itr = mTasks.begin(); itr != mTasks.end(); itr++ )
+        {
+            delete *itr;
+        }
+    }
+    
     void Add(TaskType* task)
     {
         // TODO: Add debug assert here preventing user from adding
@@ -46,34 +51,20 @@ public:
         task->mParentList = this;
     }
 
-    void Submit()
-    {
-        // TODO: Add debug assert here preventing double submit
-        for( auto itr = mTasks.begin(); itr != mTasks.end(); itr++ )
-        {
-            gScheduler->Submit(*itr);
-        }
-    }
-
     void SubmitAndWait()
     {
         for( auto itr = mTasks.begin(); itr != mTasks.end(); itr++ )
         {
-            (*itr)->mWaiting = true;
+            gScheduler->Submit(*itr);
         }
-
-        Submit();
         
         while( mTaskCount > 0 )
         {
             gScheduler->DoWork(0);
 
-            // If you are doing a spinloop, always insert one of these!
-            _mm_pause();
+            // If you are doing a spinloop, always insert one of these so the OS knows it!
+            YieldProcessor();
         }
-
-        OnComplete(mTasks);
-        Cleanup();
     }
 
     std::vector<TaskType*>& GetResults()
@@ -82,25 +73,7 @@ public:
     }
 
 private:
-
-    void Cleanup()
-    {
-        // This is the place where we can cleanup all the memory
-        for( auto itr = mTasks.begin(); itr != mTasks.end(); itr++ )
-        {
-            AlignedFree(*itr);
-        }
-
-        // This ensures that tasklists are one-shot objects
-        delete this;
-    }
-
-    virtual void OnComplete()
-    {
-        OnComplete(mTasks);
-        Cleanup();
-    }
-
+    
     std::vector<TaskType*> mTasks;
 
 };

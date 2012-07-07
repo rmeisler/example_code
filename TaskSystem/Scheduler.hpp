@@ -11,6 +11,9 @@ class Thread
 {
 public:
 
+    // Need to pass Scheduler in and use local reference since
+    // global reference won't have been set until Scheduler ctor
+    // returns (And we are creating thread pool in Scheduler ctor)
     Thread(Scheduler* scheduler);
     ~Thread();
 
@@ -32,13 +35,11 @@ public:
     ~Scheduler();
 
     void Update();
-    void AddCompletedTaskList(TaskListBase* taskList);
     void DoWork(unsigned int timeout = -1);
     void Submit(Task* task);
 
 private:
 
-    ConcurrentQueue<TaskListBase> mCompletedTaskLists;
     ConcurrentQueue<Task> mQueuedTasks;
 
     std::vector<Thread*> mThreadPool;

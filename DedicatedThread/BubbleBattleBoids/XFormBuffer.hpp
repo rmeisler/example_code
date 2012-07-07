@@ -13,24 +13,35 @@ struct XFormObject
     GameObject* owner; // Used to update xform index/call draw logic
 };
 
-struct XFormBufferHandle
+// This is the total number of objects you will ever have in your game.
+// If you notice your game needs more xforms, increase this value! Much more
+// efficient than suffering a costly reallocation penalty every time you hit capacity
+static const unsigned int BUFFER_CAPACITY = 128;
+
+struct XFormBuffer
 {
-    XFormObject* bufferPtr;
-    unsigned int bufferSize;
+    unsigned int size;
+    XFormObject buffer[BUFFER_CAPACITY];
 };
 
-class XFormBuffer
+// This is basically a specialized version of a slot map
+class XFormBufferManager
 {
 public:
 
-    XFormBuffer();
-    ~XFormBuffer();
+    XFormBufferManager();
 
     // Called by RenderThread
-    XFormBufferHandle SyncBuffer();
+    void SwapReadBuffers();
+    XFormBuffer* GetReadBuffer() const;
+
+    // Only wanna swap read buffers when dirty, this allows us to safely
+    // cleanup objects after a swap without fear that dead objects will return
+    // on a stale swap (i.e. swap with buffer that main thread hasnt yet modified)
+    bool ReadBufferDirty() const;
 
     // Called by main thread
-    void CopyBuffer();
+    void SwapWriteBuffers();
 
     void Add(GameObject* object); // Call when objects are created on main thread
     void Remove(unsigned int index); // Call when objects are destroyed on main thread
@@ -38,26 +49,16 @@ public:
 
 private:
 
-    // This is the total number of objects you will ever have in your game.
-    // If you notice your game needs more xforms, increase this value! Much more
-    // efficient than suffering a costly reallocation penalty every time you hit capacity
-    static const unsigned int BUFFER_CAPACITY = 128;
+    // Triple buffering, requires no syncing
+    // BufferPtrA read by main thread, BufferPtrB is our pivot, BufferPtrC read by render thread
+    XFormBuffer* mBufferPtrA;
+    XFormBuffer* mBufferPtrB;
+    XFormBuffer* mBufferPtrC;
 
-    void* mRenderCompleteEvent;
-    void* mBufferSwapEvent;
+    XFormBuffer mBufferA;
+    XFormBuffer mBufferB;
+    XFormBuffer mBufferC;
 
-    // Two buffers, A is read by render thread, B is written/read by main thread
-    // At end of frame we do a sync where we copy the contents of buffer B into A
-    XFormObject* mBufferPtrA;
-    XFormObject* mBufferPtrB;
-
-    XFormObject mBufferA[BUFFER_CAPACITY];
-    XFormObject mBufferB[BUFFER_CAPACITY];
-
-    // Buffer size as modified by main thread when adding new objects
-    unsigned int mActualBufferSize;
-
-    // Buffer size copy as read by RenderThread
-    unsigned int mDirtyBufferSize;
+    bool mReadBufferDirty;
 
 };

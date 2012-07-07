@@ -84,7 +84,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\AlignedAlloc.hpp" />
     <ClInclude Include="..\..\Common\ConcurrentQueue.hpp" />
     <ClInclude Include="..\..\Common\ScopedLock.hpp" />
     <ClInclude Include="Boid.h" />

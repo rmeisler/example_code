@@ -62,9 +62,6 @@
     <ClInclude Include="Wall.h">
       <Filter>Game\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Common\AlignedAlloc.hpp">
-      <Filter>Render Thread\Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\ConcurrentQueue.hpp">
       <Filter>Render Thread\Header Files</Filter>
     </ClInclude>

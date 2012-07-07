@@ -91,6 +91,10 @@ void Player::PreUpdate()
 			m_ShieldPressure = 0.f;
 	}
 
+  // Test controls since I have no xbox controller
+  if( GetAsyncKeyState(VK_SPACE) & 0x8000)
+    m_ShieldStrength = 1.0f;
+
 	// update shield
 	m_ShieldForce = std::max(0.f, (m_ShieldStrength - m_ShieldStrengthLast) / g_FrameTime * 0.05f);
 

@@ -9,7 +9,7 @@ struct Vec2
 	float y;
 
 	float Length() const { return std::sqrt(Dot(*this)); }
-	Vec2 Normalize() const { ASSERT(!IsZero()); return Vec2(x / Length(), y / Length()); }
+	Vec2 Normalize() const { return Vec2(x / Length(), y / Length()); }
 	bool IsZero() const { return x == 0.f && y == 0.f; }
 	Vec2 Invert() const { return Vec2(1.f / x, 1.f / y); }
 	inline Vec2 Clamp(float max) const;

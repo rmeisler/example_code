@@ -23,7 +23,7 @@ extern int g_NumPlayers;
 
 // RenderThread globals
 RenderThread* g_RenderThread = NULL;
-extern XFormBuffer* g_XFormBuffer;
+extern XFormBufferManager* g_XFormBuffer;
 
 // Use this to test timing
 void InitTimer();
@@ -32,9 +32,6 @@ double GetTime();
 
 RenderThread::RenderThread(int argc, char** argv) : mRunning(true), mArgC(argc), mArgV(argv)
 {
-    mBufferHandle.bufferPtr = 0;
-    mBufferHandle.bufferSize = 0;
-
     mThreadHnd = CreateThread(0, 0, ThreadFunction, 0, 0, 0);
 }
 
@@ -47,7 +44,7 @@ RenderThread::~RenderThread()
     CloseHandle(mThreadHnd);
 }
 
-void RenderThread::SendMessage(Message* msg)
+void RenderThread::Send(Message* msg)
 {
     mQueue.push(msg);
 }
@@ -59,12 +56,15 @@ void RenderThread::HandleMessages()
     
     while( mQueue.try_pop(msg) )
     {
-        // Handle messages...
+        // Handle any messages we might have for render thread...
         switch(msg->type)
         {
-            case 0:
+            case KillObjectMsg::id:
+                mDeadObjects.push_back(((KillObjectMsg*)msg)->object);
                 break;
         }
+
+        delete msg;
 
         // Handle some set number of messages per loop, don't want to be overwhelmed by message
         // processing and forget about actually rendering the scene!
@@ -75,22 +75,30 @@ void RenderThread::HandleMessages()
 
 void RenderThread::Render()
 {
+    XFormBuffer* bufferHandle = g_XFormBuffer->GetReadBuffer();
+    
     // We don't really have any special culling logic or ordering, so we can just walk the xform buffer and draw each object
-    for( unsigned int i = 0; i < mBufferHandle.bufferSize; i++ )
+    for( unsigned int i = 0; i < bufferHandle->size; i++ )
     {
-        XFormObject* obj = &mBufferHandle.bufferPtr[i];
+        XFormObject* obj = &bufferHandle->buffer[i];
 
-		glPushMatrix();
-		glTranslatef(obj->pos.x, obj->pos.y, 0.f);
+		    glPushMatrix();
+		    glTranslatef(obj->pos.x, obj->pos.y, 0.f);
+
         obj->owner->Draw(obj);
 
-		glPopMatrix();
-	}
+		    glPopMatrix();
+	  }
 }
 
-void RenderThread::Sync()
+void RenderThread::CleanUp()
 {
-    mBufferHandle = g_XFormBuffer->SyncBuffer();
+    // Destroy dead objects
+    while(!mDeadObjects.empty())
+    {
+        delete mDeadObjects.back();
+        mDeadObjects.pop_back();
+    }
 }
 
 void Display();
@@ -109,13 +117,13 @@ DWORD WINAPI RenderThread::ThreadFunction(void* data)
     // Run graphics loop
 	glutMainLoop();
 
-    return 0;
+  return 0;
 }
 
 // Render the scene
 void Display()
 {
-    StartTime();
+  StartTime();
     
 	// Initialize the rendering
 	glViewport(0, 0, 800, 600);
@@ -179,12 +187,16 @@ void Display()
 	// Swap buffers
 	glutSwapBuffers();
 
-    // Handle messages
-    g_RenderThread->HandleMessages();
+  // Handle messages
+  g_RenderThread->HandleMessages();
 
-    // Sync up render data with data from main thread
-    g_RenderThread->Sync();
+  // Read from other buffer
+  if( g_XFormBuffer->ReadBufferDirty() )
+  {
+    g_XFormBuffer->SwapReadBuffers();
+    g_RenderThread->CleanUp();
+  }
 
-    // Redraw immediately
+  // Redraw immediately
 	glutPostRedisplay();
 }

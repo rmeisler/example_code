@@ -43,7 +43,7 @@ double g_TotalTime = 0.f;
 
 // RenderThread globals
 extern RenderThread* g_RenderThread;
-XFormBuffer* g_XFormBuffer;
+XFormBufferManager* g_XFormBuffer;
 
 // Use this to test timing
 void InitTimer();
@@ -53,10 +53,10 @@ double GetTime();
 // Entry point
 int main(int argc, char** argv)
 {
-    g_XFormBuffer = new XFormBuffer();
-    g_RenderThread = new RenderThread(argc, argv);
+  g_XFormBuffer = new XFormBufferManager();
+  g_RenderThread = new RenderThread(argc, argv);
 
-    InitTimer();
+  InitTimer();
 
 	ResetGame();
 
@@ -64,8 +64,8 @@ int main(int argc, char** argv)
 	QueryPerformanceFrequency(&g_Frequency);
 	QueryPerformanceCounter(&g_LastFrame);
 
-    // Game loop
-    RunGameLoop();
+  // Game loop
+  RunGameLoop();
 
 	return 0;
 }
@@ -137,7 +137,7 @@ void RunGameLoop()
 	    g_FrameTime = std::min(g_FrameTime, 1.f / 30.f);
 	    g_LastFrame = now;
 
-        // exit logic
+        // Exit logic, test controls since I have no xbox controller
         if( GetAsyncKeyState(VK_ESCAPE) & 0x8000 )
             break;
 
@@ -159,17 +159,25 @@ void RunGameLoop()
 		    UpdateGameState();
 	    }
 
-	    // Remove dead objects from shared data
-	    GameObject::RemoveFromSharedData();
+	    // Remove dead objects from write data
+	    GameObject::CleanUp();
 
-        // Send our xform buffer to the render thread
-        g_XFormBuffer->CopyBuffer();
+      // Send our xform buffer to the render thread
+      g_XFormBuffer->SwapWriteBuffers();
     }
 }
 
 // Game state
 void UpdateInput()
 {
+  // Test controls since I have no xbox controller
+  if( g_State != StatePlay && GetAsyncKeyState(VK_RETURN) & 0x8000)
+  {
+    ++g_NumPlayers;
+    new Player((Player::PlayerNum)0);
+    g_State = StatePlay;
+  }
+
 	for (int i = 0; i != MAX_PLAYERS; ++i)
 	{
 		XINPUT_STATE state;
@@ -180,7 +188,7 @@ void UpdateInput()
 			if (g_State == StateStart && g_Players[i] == NULL && 0 != (state.Gamepad.wButtons & XINPUT_GAMEPAD_A))
 			{
 				++g_NumPlayers;
-                new Player((Player::PlayerNum)i);
+        new Player((Player::PlayerNum)i);
 			}
 
 			if (g_State == StateStart && g_Players[i] != NULL && 0 != (state.Gamepad.wButtons & XINPUT_GAMEPAD_B))

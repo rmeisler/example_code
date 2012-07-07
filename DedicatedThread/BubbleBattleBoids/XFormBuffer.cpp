@@ -2,86 +2,93 @@
 #include "GameObject.h"
 
 #include <stdlib.h>
-#include <utility>
 
-XFormBuffer::XFormBuffer()
+XFormBufferManager::XFormBufferManager()
 {
-    mRenderCompleteEvent = CreateEvent(0, 0, 0, 0);
-    mBufferSwapEvent = CreateEvent(0, 0, 0, 0);
+    mBufferPtrA = &mBufferA;
+    mBufferPtrB = &mBufferB;
+    mBufferPtrC = &mBufferC;
 
-    mActualBufferSize = 0;
-    mDirtyBufferSize = 0;
+    mReadBufferDirty = false;
+
+    mBufferPtrA->size = 0;
+    mBufferPtrB->size = 0;
+    mBufferPtrC->size = 0;
 }
 
-XFormBuffer::~XFormBuffer()
+void XFormBufferManager::Add(GameObject* object)
 {
-    CloseHandle(mRenderCompleteEvent);
-    CloseHandle(mBufferSwapEvent);
-}
-
-void XFormBuffer::Add(GameObject* object)
-{
-    ASSERT(mActualBufferSize < BUFFER_CAPACITY);
+    unsigned int bufferSize = mBufferPtrA->size;
+    ASSERT(bufferSize < BUFFER_CAPACITY);
 
     // Pass object the index into the buffer it'll need to access its data (xform id)
-    object->SetXFormId(mActualBufferSize);
+    object->SetXFormId(bufferSize);
 
     // Zero out xform object
-    memset(mBufferPtrB + mActualBufferSize, 0, sizeof(XFormObject));
+    memset(mBufferPtrA->buffer + bufferSize, 0, sizeof(XFormObject));
 
     // Set object pointer on xform object
-    mBufferPtrB[mActualBufferSize].owner = object;
+    mBufferPtrA->buffer[bufferSize].owner = object;
 
     // Increase xform buffer size
-    mActualBufferSize++;
+    mBufferPtrA->size++;
 }
 
-void XFormBuffer::Remove(unsigned int index)
+void XFormBufferManager::Remove(unsigned int index)
 {
     // Swap last item with this item
-    std::swap(mBufferPtrB[index], mBufferPtrB[mActualBufferSize - 1]);
+    std::swap(mBufferPtrA->buffer[index], mBufferPtrA->buffer[mBufferPtrA->size - 1]);
 
     // Shrink buffer size
-    mActualBufferSize--;
+    mBufferPtrA->size--;
     
     // Update index of swapped object
-    mBufferPtrB[index].owner->SetXFormId(index);
+    mBufferPtrA->buffer[index].owner->SetXFormId(index);
 }
 
-XFormObject* XFormBuffer::Get(unsigned int index)
+XFormObject* XFormBufferManager::Get(unsigned int index)
 {
-    return &mBufferPtrB[index];
+    return &mBufferPtrA->buffer[index];
 }
 
-XFormObject* XFormBuffer::GetRenderBuffer()
+XFormBuffer* XFormBufferManager::GetReadBuffer() const
 {
-    return mBufferPtrA;
+    return mBufferPtrC;
 }
 
-void XFormBuffer::SyncBuffer()
+bool XFormBufferManager::ReadBufferDirty() const
 {
-    // Signal render event
-    SetEvent(mRenderCompleteEvent);
+    return mReadBufferDirty;
 }
 
-void XFormBuffer::CopyBuffer()
+void XFormBufferManager::SwapReadBuffers()
 {
-    WaitForSingleObject(mRenderCompleteEvent, INFINITE);
-    
-    // Update buffer size
-    InterlockedExchange(&mDirtyBufferSize, mActualBufferSize);
-
     // Swap buffers
-    XFormObject* ptrA = mBufferPtrA;
-    InterlockedExchangePointer(&mBufferPtrA, mBufferPtrB);
-    mBufferPtrB = ptrA;
+    XFormBuffer* temp = mBufferPtrB;
+
+    // Pivot write needs to be made available on other thread immediately
+    InterlockedExchangePointer(&mBufferPtrB, mBufferPtrC);
+
+    // This write only matters to render thread
+    mBufferPtrC = temp;
     
-    // We can do memcpy on our own time...
+    mReadBufferDirty = false;
+}
 
-    // Essentially all we're doing is copying the results of the main thread processing over to
-    // the render thread's xform buffer
-    memcpy(mBufferPtrB, mBufferPtrA, sizeof(XFormObject) * mActualBufferSize);
+void XFormBufferManager::SwapWriteBuffers()
+{
+    // Swap buffers
+    XFormBuffer* temp = mBufferPtrB;
 
-    // No one should be referencing old dead objects now, cleanup!
-    GameObject::CleanUp();
+    // Pivot write needs to be made available on other thread immediately
+    InterlockedExchangePointer(&mBufferPtrB, mBufferPtrA);
+
+    // This write only matters to main thread
+    mBufferPtrA = temp;
+
+    mReadBufferDirty = true;
+
+    // Essentially all we're doing is copying the results of main thread processing last frame
+    // into our new buffer before using it for this new frame
+    memcpy(mBufferPtrA, mBufferPtrB, sizeof(XFormObject) * mBufferPtrB->size + sizeof(unsigned int));
 }

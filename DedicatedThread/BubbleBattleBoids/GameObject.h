@@ -2,7 +2,7 @@
 
 #include "Vec2.h"
 
-extern XFormBuffer* g_XFormBuffer;
+extern XFormBufferManager* g_XFormBuffer;
 
 // Base game object
 class GameObject
