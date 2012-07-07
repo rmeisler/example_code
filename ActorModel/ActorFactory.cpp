@@ -62,6 +62,9 @@ ActorHandle ActorFactory::CreateHandle(ActorCreator& creator)
 
 void ActorFactory::ThreadConstruct(ActorHandle& handle)
 {
+    // Writer lock
+    AcquireSRWLockExclusive(&mMutex);
+
     // Build actor and overwrite actorRef union
     Index* indexRef = &mSlots[handle.index];
     ActorCreator& creator = indexRef->actorRef.creator;
@@ -70,6 +73,8 @@ void ActorFactory::ThreadConstruct(ActorHandle& handle)
     free(creator.paramBuffer);
 
     indexRef->actorRef.actorRef = newActorRef;
+
+    ReleaseSRWLockExclusive(&mMutex);
 }
 
 void ActorFactory::Destroy(ActorHandle& handle)
