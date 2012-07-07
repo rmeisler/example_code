@@ -50,10 +50,9 @@ public:
 private:
 
     // Triple buffering, requires no syncing
-    // BufferPtrA read by main thread, BufferPtrB is our pivot, BufferPtrC read by render thread
-    XFormBuffer* mBufferPtrA;
-    XFormBuffer* mBufferPtrB;
-    XFormBuffer* mBufferPtrC;
+    XFormBuffer* mWriteBuffer;
+    volatile XFormBuffer* mPivotBuffer;
+    XFormBuffer* mReadBuffer;
 
     XFormBuffer mBufferA;
     XFormBuffer mBufferB;
