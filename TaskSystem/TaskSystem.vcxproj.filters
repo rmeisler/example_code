@@ -47,5 +47,8 @@
     <ClInclude Include="..\Common\ScopedLock.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\AlignedAlloc.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

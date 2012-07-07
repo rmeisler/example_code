@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Task.hpp"
+#include "AlignedAlloc.hpp"
 
 #include <vector>
 
@@ -37,7 +38,7 @@ public:
         // Cleanup tasks
         for( auto itr = mTasks.begin(); itr != mTasks.end(); itr++ )
         {
-            delete *itr;
+            AlignedFree(*itr);
         }
     }
     
@@ -60,7 +61,7 @@ public:
         
         while( mTaskCount > 0 )
         {
-            gScheduler->DoWork(true);
+            gScheduler->DoWork(0);
 
             // If you are doing a spinloop, always insert one of these so the OS knows it!
             YieldProcessor();

@@ -7,6 +7,7 @@
 /////////////////////////////////////////////////////////////////////
 #include "Scheduler.hpp"
 #include "TaskList.hpp"
+#include "AlignedAlloc.hpp"
 
 #include <stdio.h>
 
@@ -40,7 +41,7 @@ void Parallel()
     
     for( int i = 0; i < 4; i++ )
     {
-        tasks[i] = new PiApproxTask(i * 10000000, (i + 1) * 10000000 - 1);
+        tasks[i] = AlignedAlloc<PiApproxTask>(i * 10000000, (i + 1) * 10000000 - 1);
     }
     
     // I do this to illustrate the overhead of actually dynamically allocating tasks,
