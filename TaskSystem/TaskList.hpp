@@ -60,7 +60,7 @@ public:
         
         while( mTaskCount > 0 )
         {
-            gScheduler->DoWork(0);
+            gScheduler->DoWork(true);
 
             // If you are doing a spinloop, always insert one of these so the OS knows it!
             YieldProcessor();

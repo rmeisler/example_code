@@ -2,6 +2,9 @@
 
 class TaskListBase;
 
+// Try removing this and running in release mode, you may see some terrible performance.
+// This is the result of cache invalidation from false sharing.
+__declspec(align(64))
 class Task
 {
 public:
