@@ -64,7 +64,7 @@ bool XFormBufferManager::ReadBufferDirty() const
 void XFormBufferManager::SwapReadBuffers()
 {
     // Swap buffers, volatile read should ensure memory ordering of read is consistent (MSVC only, must use read barrier normally)
-    volatile XFormBuffer* temp = mPivotBuffer;
+    XFormBuffer* volatile temp = mPivotBuffer;
 
     // Pivot write needs to be made available on other thread immediately
     InterlockedExchangePointer(&mPivotBuffer, mReadBuffer);
@@ -78,7 +78,7 @@ void XFormBufferManager::SwapReadBuffers()
 void XFormBufferManager::SwapWriteBuffers()
 {
     // Swap buffers, volatile read should ensure memory ordering of read is consistent (MSVC only, must use read barrier normally)
-    volatile XFormBuffer* temp = mPivotBuffer;
+    XFormBuffer* volatile temp = mPivotBuffer;
 
     // Pivot write needs to be made available on other thread immediately
     InterlockedExchangePointer(&mPivotBuffer, mWriteBuffer);

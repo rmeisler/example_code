@@ -51,13 +51,14 @@ private:
 
     // Triple buffering, requires no syncing
     XFormBuffer* mWriteBuffer;
-    volatile XFormBuffer* mPivotBuffer;
+    XFormBuffer* volatile mPivotBuffer;
     XFormBuffer* mReadBuffer;
 
     XFormBuffer mBufferA;
     XFormBuffer mBufferB;
     XFormBuffer mBufferC;
 
-    bool mReadBufferDirty;
+    // Always err towards caution when it comes to memory ordering :)
+    volatile bool mReadBufferDirty;
 
 };
